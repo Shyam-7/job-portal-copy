@@ -1,0 +1,421 @@
+<app-header></app-header>
+
+<div class="applied-jobs-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>My Applied Jobs</h1>
+    <p class="page-subtitle">Track and manage your job applications</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your applications...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <div class="error-icon">⚠️</div>
+    <h3>Oops! Something went wrong</h3>
+    <p>{{ error }}</p>
+    <button (click)="loadApplications()" class="retry-btn">Try Again</button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && !error && applications.length === 0" class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>No Applications Yet</h3>
+    <p>You haven't applied to any jobs yet. Start your job search today!</p>
+    <a routerLink="/user/job-search" class="browse-jobs-button">Browse Jobs</a>
+  </div>
+
+  <!-- Applications List -->
+  <div *ngIf="!isLoading && !error && applications.length > 0" class="applications-content">
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+      <div class="stat-card">
+        <div class="stat-number">{{ applications.length }}</div>
+        <div class="stat-label">Total Applications</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ getApplicationsByStatus('Under Review').length }}</div>
+        <div class="stat-label">Under Review</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ getApplicationsByStatus('Interview').length }}</div>
+        <div class="stat-label">Interviews</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ getApplicationsByStatus('Accepted').length }}</div>
+        <div class="stat-label">Accepted</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>Sort by:</label>
+        <select (change)="sortApplications($event)" [value]="currentSort">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Filter by status:</label>
+        <select (change)="filterByStatus($event)" [value]="selectedStatus">
+          <option value="all">All Applications</option>
+          <option value="Applied">Applied</option>
+          <option value="Under Review">Under Review</option>
+          <option value="Interview">Interview</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Accepted">Accepted</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Application Cards -->
+    <div class="application-cards">
+      <div *ngFor="let item of filteredApplications" class="application-card">
+        <!-- Job Information -->
+        <div class="job-info">
+          <div class="company-logo" [style.background-color]="item.job.color">
+            {{ getCompanyInitials(item.job.company || item.job.company_name || '') }}
+          </div>
+          <div class="job-details">
+            <h3 class="job-title">{{ item.job.title }}</h3>
+            <p class="company-name">{{ item.job.company || item.job.company_name }}</p>
+            <p class="job-location">{{ item.job.location }}</p>
+            <p class="job-type">{{ item.job.experience || item.job.experience_level }} • {{ item.job.salaryRange || 'Salary not disclosed' }}</p>
+          </div>
+        </div>
+        
+        <!-- Application Status -->
+        <div class="application-details">
+          <div class="status-section">
+            <div class="status-row">
+              <label class="status-label">
+                <i class="fas fa-info-circle"></i>
+                Status:
+              </label>
+              <select 
+                [value]="item.application.status" 
+                (change)="updateApplicationStatus(item.application, $event)"
+                class="status-dropdown">
+                <option value="Applied">Applied</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Interview">Interview</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+            <div class="application-metadata">
+              <span class="applied-date">
+                <i class="fas fa-calendar-alt"></i>
+                Applied on {{ item.application.applicationDate | date:'mediumDate' }}
+              </span>
+              <span class="application-type" [class.quick-apply]="item.application.quickApply">
+                <i [class]="item.application.quickApply ? 'fas fa-bolt' : 'fas fa-file-alt'"></i>
+                {{ item.application.quickApply ? 'Quick Apply' : 'Custom Apply' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Job Details are now hidden and shown only in modal -->
+          
+          <!-- Actions -->
+          <div class="actions">
+            <button 
+              (click)="viewJobDetails(item.application.jobId)" 
+              class="action-btn icon-btn"
+              title="View job posting">
+              <i class="fas fa-external-link-alt"></i>
+            </button>
+            
+            <button 
+              (click)="viewApplicationDetails(item.application)" 
+              class="action-btn details-btn"
+              title="View application details">
+              <i class="fas fa-eye"></i>
+              View Application Details
+            </button>
+            
+            <!-- Debug: Status = {{ item.application.status }} -->
+            <button 
+              *ngIf="canEdit(item.application.status)"
+              (click)="editApplication(item.application)" 
+              class="action-btn icon-btn"
+              title="Edit application details">
+              <i class="fas fa-edit"></i>
+            </button>
+            
+            <button 
+              *ngIf="canWithdraw(item.application.status)"
+              (click)="withdrawApplication(item.application.id + '')" 
+              class="action-btn withdraw-btn"
+              title="Withdraw this application">
+              <i class="fas fa-times-circle"></i>
+              Withdraw
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Application Modal -->
+  <div *ngIf="showEditModal" class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Edit Application</h3>
+        <button (click)="closeEditModal()" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" [(ngModel)]="editForm.fullName" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="editForm.email" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" [(ngModel)]="editForm.phone" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Cover Letter</label>
+          <textarea [(ngModel)]="editForm.coverLetter" class="form-textarea resize-none" rows="4" 
+                    (input)="updateCoverLetterCount()"></textarea>
+          <div class="word-count">
+            <span>{{ getCoverLetterWordCount() }} words | {{ getCoverLetterCharCount() }} characters</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button (click)="closeEditModal()" class="cancel-btn">Cancel</button>
+        <button (click)="saveEditedApplication()" class="save-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Details Modal -->
+  <div *ngIf="showDetailsModal" class="modal-overlay" (click)="closeDetailsModal()">
+    <div class="modal-content application-details-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Application Details</h3>
+        <button (click)="closeDetailsModal()" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="modal-body" *ngIf="selectedApplication">
+        <div class="details-section">
+          <h4>Job Information</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Job Title:</label>
+              <span>{{ selectedJob?.title }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Company:</label>
+              <span>{{ selectedJob?.company }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Location:</label>
+              <span>{{ selectedJob?.location }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Experience:</label>
+              <span>{{ selectedJob?.experience }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Salary:</label>
+              <span>₹{{ selectedJob?.salary | number }}</span>
+            </div>
+          </div>
+          <div class="detail-item" *ngIf="selectedJob?.description?.overview">
+            <label>Description:</label>
+            <p>{{ selectedJob?.description?.overview }}</p>
+          </div>
+          <div class="detail-item" *ngIf="selectedJob?.description?.responsibilities?.length">
+            <label>Responsibilities:</label>
+            <ul>
+              <li *ngFor="let resp of selectedJob?.description?.responsibilities">{{ resp }}</li>
+            </ul>
+          </div>
+          <div class="detail-item" *ngIf="selectedJob?.description?.qualifications?.length">
+            <label>Qualifications:</label>
+            <ul>
+              <li *ngFor="let qual of selectedJob?.description?.qualifications">{{ qual }}</li>
+            </ul>
+          </div>
+          <div class="detail-item" *ngIf="selectedJob?.description?.skills?.length">
+            <label>Skills Required:</label>
+            <div class="skills-container">
+              <span *ngFor="let skill of selectedJob?.description?.skills" class="job-skill">{{ skill }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h4>Application Information</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Application Type:</label>
+              <span class="application-type" [class.quick-apply]="selectedApplication.quickApply">
+                {{ selectedApplication.quickApply ? 'Quick Apply' : 'Custom Apply' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <label>Applied Date:</label>
+              <span>{{ selectedApplication.applicationDate | date:'full' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Status:</label>
+              <span class="status-text">
+                {{ selectedApplication.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section" *ngIf="!selectedApplication.quickApply">
+          <h4>Personal Information</h4>
+          <div class="details-grid">
+            <div class="detail-item" *ngIf="selectedApplication.fullName">
+              <label>Full Name:</label>
+              <span>{{ selectedApplication.fullName }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedApplication.email">
+              <label>Email:</label>
+              <span>{{ selectedApplication.email }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedApplication.phone">
+              <label>Phone:</label>
+              <span>{{ selectedApplication.phone }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section" *ngIf="selectedApplication.quickApply">
+          <h4>Applied Using Profile</h4>
+          <p class="profile-info">This application was submitted using your saved profile information including your resume, contact details, and professional information.</p>
+        </div>
+
+        <div class="details-section" *ngIf="selectedApplication.resumePath">
+          <h4>Resume</h4>
+          <div class="resume-info">
+            <i class="fas fa-file-pdf"></i>
+            <span>{{ selectedApplication.resumePath }}</span>
+            <button class="download-btn" *ngIf="selectedApplication.resumePath">
+              <i class="fas fa-download"></i> Download
+            </button>
+          </div>
+        </div>
+
+        <div class="details-section" *ngIf="selectedApplication.coverLetter">
+          <h4>Cover Letter</h4>
+          <div class="cover-letter-content">
+            <p>{{ selectedApplication.coverLetter }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button (click)="closeDetailsModal()" class="close-modal-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Confirmation Modal -->
+  <div *ngIf="showEditConfirmModal" class="modal-overlay" (click)="closeEditConfirmModal()">
+    <div class="modal-content edit-confirm-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚠️ Edit Application</h3>
+        <button (click)="closeEditConfirmModal()" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="warning-content">
+          <div class="warning-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="warning-text">
+            <p><strong>You have already submitted application details for this job.</strong></p>
+            <p>Are you sure you want to edit the details? This action will modify your original application information.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button (click)="closeEditConfirmModal()" class="cancel-btn">Cancel</button>
+        <button (click)="confirmEdit()" class="confirm-btn">Yes, Edit Details</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Withdrawal Warning Modal (Tailwind-styled) -->
+  <div *ngIf="showWithdrawModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-gray-200">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <h3 class="ml-3 text-lg font-medium text-gray-900">Withdraw Application</h3>
+        </div>
+        <button (click)="closeWithdrawModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6">
+        <div class="mb-4">
+          <p class="text-sm text-gray-700 mb-3">
+            <strong class="text-gray-900">Are you sure you want to withdraw this application?</strong>
+          </p>
+          <div class="bg-red-50 border border-red-200 rounded-md p-4">
+            <ul class="text-sm text-red-700 space-y-1">
+              <li class="flex items-start">
+                <span class="inline-block w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                Remove your application from employer's consideration
+              </li>
+              <li class="flex items-start">
+                <span class="inline-block w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                Change your application status to "Withdrawn"
+              </li>
+              <li class="flex items-start">
+                <span class="inline-block w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                This action cannot be undone
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 rounded-b-lg">
+        <button 
+          (click)="closeWithdrawModal()" 
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+          Cancel
+        </button>
+        <button 
+          (click)="confirmWithdraw()" 
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+          Yes, Withdraw Application
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
