@@ -1,0 +1,321 @@
+<main>
+  <div class="p-6">
+    <!-- Page Header -->
+    <div class="mb-6 flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+        <p class="text-gray-600 mt-1">Comprehensive overview of platform metrics and trends</p>
+      </div>
+      <div class="flex space-x-3">
+        <button 
+          (click)="refreshData()" 
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+        <button 
+          (click)="exportReport('pdf')" 
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <span>Export PDF</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <span class="ml-3 text-gray-600">Loading analytics data...</span>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex">
+        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">Error Loading Data</h3>
+          <p class="text-sm text-red-700 mt-1">{{ error }} Displaying sample data instead.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Content -->
+    <div *ngIf="!isLoading">
+      <!-- Stats Cards Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Users -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-sm font-medium text-gray-500">Total Users</h4>
+            <div class="p-2 bg-blue-100 rounded-lg">
+              <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 mb-1">{{ analyticsData?.totalUsers | number }}</div>
+          <p class="text-sm" [ngClass]="getGrowthClass(analyticsData?.userGrowth || 0)">
+            {{ getGrowthIcon(analyticsData?.userGrowth || 0) }} {{ analyticsData?.userGrowth | number:'1.1-1' }}% from last month
+          </p>
+        </div>
+
+        <!-- Active Jobs -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-sm font-medium text-gray-500">Active Jobs</h4>
+            <div class="p-2 bg-green-100 rounded-lg">
+              <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 mb-1">{{ analyticsData?.activeJobs | number }}</div>
+          <p class="text-sm" [ngClass]="getGrowthClass(analyticsData?.jobGrowth || 0)">
+            {{ getGrowthIcon(analyticsData?.jobGrowth || 0) }} {{ analyticsData?.jobGrowth | number:'1.1-1' }}% from last month
+          </p>
+        </div>
+
+        <!-- Applications Submitted -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-sm font-medium text-gray-500">Applications Submitted</h4>
+            <div class="p-2 bg-yellow-100 rounded-lg">
+              <svg class="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 mb-1">{{ analyticsData?.totalApplications | number }}</div>
+          <p class="text-sm" [ngClass]="getGrowthClass(analyticsData?.applicationGrowth || 0)">
+            {{ getGrowthIcon(analyticsData?.applicationGrowth || 0) }} {{ analyticsData?.applicationGrowth | number:'1.1-1' }}% from last month
+          </p>
+        </div>
+
+        <!-- Users Visited -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-sm font-medium text-gray-500">Page Visits</h4>
+            <div class="p-2 bg-purple-100 rounded-lg">
+              <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 mb-1">{{ analyticsData?.userVisits | number }}</div>
+          <p class="text-sm" [ngClass]="getGrowthClass(analyticsData?.visitGrowth || 0)">
+            {{ getGrowthIcon(analyticsData?.visitGrowth || 0) }} {{ analyticsData?.visitGrowth | number:'1.1-1' }}% from last month
+          </p>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Job Categories Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Job Categories Distribution</h3>
+            <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Current Month</span>
+          </div>
+          <div class="h-80">
+            <canvas #categoriesChart class="w-full h-full"></canvas>
+          </div>
+        </div>
+
+        <!-- Monthly Trends Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Monthly Trends</h3>
+            <div class="flex space-x-2">
+              <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">Users</span>
+              <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Jobs</span>
+              <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">Applications</span>
+            </div>
+          </div>
+          <div class="h-80">
+            <canvas #monthlyTrendsChart class="w-full h-full"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conversion Funnel and Application Status -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Enhanced Conversion Rates Visualization -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Conversion Funnel</h3>
+            <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Last 30 days</span>
+          </div>
+          <div class="space-y-6" *ngIf="conversionData">
+            <!-- Visit to Application -->
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="font-medium text-gray-900">Page Visits</span>
+                <span class="font-bold text-xl text-gray-900">{{ conversionData.totalVisits | number }}</span>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full bg-blue-500 transition-all duration-500" 
+                         [style.width.%]="conversionData.visitToApplicationRate"></div>
+                  </div>
+                </div>
+                <div class="w-20 text-right">
+                  <span class="font-bold text-blue-600">{{ conversionData.visitToApplicationRate | number:'1.1-1' }}%</span>
+                </div>
+              </div>
+              <div class="flex justify-between text-sm text-gray-500">
+                <span>Applications: {{ conversionData.totalApplications | number }}</span>
+                <span>{{ conversionData.totalVisits | number }} → {{ conversionData.totalApplications | number }}</span>
+              </div>
+            </div>
+
+            <!-- Application to Interview -->
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="font-medium text-gray-900">Applications</span>
+                <span class="font-bold text-xl text-gray-900">{{ conversionData.totalApplications | number }}</span>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full bg-green-500 transition-all duration-500" 
+                         [style.width.%]="conversionData.applicationToInterviewRate"></div>
+                  </div>
+                </div>
+                <div class="w-20 text-right">
+                  <span class="font-bold text-green-600">{{ conversionData.applicationToInterviewRate | number:'1.1-1' }}%</span>
+                </div>
+              </div>
+              <div class="flex justify-between text-sm text-gray-500">
+                <span>Interviews: {{ conversionData.totalInterviews | number }}</span>
+                <span>{{ conversionData.totalApplications | number }} → {{ conversionData.totalInterviews | number }}</span>
+              </div>
+            </div>
+
+            <!-- Interview to Hire -->
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="font-medium text-gray-900">Interviews</span>
+                <span class="font-bold text-xl text-gray-900">{{ conversionData.totalInterviews | number }}</span>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full bg-purple-500 transition-all duration-500" 
+                         [style.width.%]="conversionData.interviewToHireRate"></div>
+                  </div>
+                </div>
+                <div class="w-20 text-right">
+                  <span class="font-bold text-purple-600">{{ conversionData.interviewToHireRate | number:'1.1-1' }}%</span>
+                </div>
+              </div>
+              <div class="flex justify-between text-sm text-gray-500">
+                <span>Hires: {{ conversionData.totalHires | number }}</span>
+                <span>{{ conversionData.totalInterviews | number }} → {{ conversionData.totalHires | number }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Application Status Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Application Status</h3>
+            <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Current Month</span>
+          </div>
+          <div class="h-80">
+            <canvas #statusChart class="w-full h-full"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Performing Jobs -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8" *ngIf="topJobs.length > 0">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-semibold text-gray-900">Top Performing Jobs</h3>
+          <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Most Applications</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr class="border-b border-gray-200">
+                <th class="text-left py-3 px-4 font-medium text-gray-700">Job Title</th>
+                <th class="text-left py-3 px-4 font-medium text-gray-700">Company</th>
+                <th class="text-right py-3 px-4 font-medium text-gray-700">Applications</th>
+                <th class="text-right py-3 px-4 font-medium text-gray-700">Views</th>
+                <th class="text-right py-3 px-4 font-medium text-gray-700">Conversion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let job of topJobs; let i = index" class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-3 px-4">
+                  <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                      <span class="text-sm font-medium text-blue-600">{{ i + 1 }}</span>
+                    </div>
+                    <span class="font-medium text-gray-900">{{ job.title }}</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-gray-600">{{ job.company }}</td>
+                <td class="py-3 px-4 text-right">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {{ job.applications }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right text-gray-600">{{ job.views | number }}</td>
+                <td class="py-3 px-4 text-right">
+                  <span class="text-sm font-medium" 
+                        [ngClass]="job.views > 0 ? 'text-blue-600' : 'text-gray-400'">
+                    {{ job.views > 0 ? ((job.applications / job.views) * 100 | number:'1.1-1') + '%' : 'N/A' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end space-x-3">
+        <button 
+          (click)="exportReport('excel')" 
+          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <span>Export Excel</span>
+        </button>
+        <button 
+          (click)="exportReport('pdf')" 
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <span>Generate Detailed Report</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
