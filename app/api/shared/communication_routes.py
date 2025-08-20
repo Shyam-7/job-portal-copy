@@ -4,12 +4,17 @@ from typing import List
 from app.db.schemas.communication.announcement_schema import Announcement, AnnouncementCreate, AnnouncementUpdate
 from app.db.schemas.communication.notification_schema import Notification
 from app.db.schemas.communication.notification_preference_schema import NotificationPreference, NotificationPreferenceUpdate
+from app.db.schemas.communication.message_schema import Message, MessageCreate
 from app.services.communication_service import (
+    get_messages_for_application,
+    create_message,
     get_announcements,
+    get_announcement_stats,
     create_announcement,
     update_announcement,
     cancel_scheduled_announcement,
     get_user_notifications,
+    send_custom_notification,
     mark_notification_as_read,
     mark_all_notifications_as_read,
     get_notification_preferences,
@@ -22,10 +27,31 @@ from app.api.deps import get_db
 
 router = APIRouter(prefix="/api/communication", tags=["Communication"])
 
+# Messages
+@router.get("/{application_id}/messages", response_model=List[Message])
+def read_messages_for_application(application_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return get_messages_for_application(db, application_id=application_id, user_id=current_user.id, user_role=current_user.role)
+
+@router.post("/messages", response_model=Message, status_code=status.HTTP_201_CREATED)
+def create_new_message(message: MessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return create_message(db, message=message, user_id=current_user.id, user_role=current_user.role)
+
 # Announcements (Admin)
+@router.get("/announcements/stats", response_model=dict)
+def read_announcement_stats(db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
+    return get_announcement_stats(db)
+
 @router.get("/announcements", response_model=List[Announcement])
 def read_announcements(status: str = None, db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
     return get_announcements(db, status=status)
+
+@router.get("/announcements/scheduled", response_model=List[Announcement])
+def read_scheduled_announcements(db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
+    return get_announcements(db, status='scheduled')
+
+@router.get("/announcements/drafts", response_model=List[Announcement])
+def read_draft_announcements(db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
+    return get_announcements(db, status='draft')
 
 @router.post("/announcements", response_model=Announcement, status_code=status.HTTP_201_CREATED)
 def create_new_announcement(announcement: AnnouncementCreate, db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
@@ -51,6 +77,10 @@ def mark_one_notification_as_read(notification_id: str, db: Session = Depends(ge
 @router.put("/notifications/read-all")
 def mark_all_user_notifications_as_read(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return mark_all_notifications_as_read(db, user_id=current_user.id)
+
+@router.post("/notifications/send", response_model=Notification)
+def send_custom_notification_to_user(user_id: str, title: str, message: str, db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
+    return send_custom_notification(db, user_id=user_id, title=title, message=message)
 
 # Notification Preferences (User)
 @router.get("/preferences", response_model=NotificationPreference)

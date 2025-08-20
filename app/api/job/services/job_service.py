@@ -3,8 +3,40 @@ from app.db.models.job.job_model import Job
 from app.db.schemas.job.job_schema import JobCreate, JobUpdate
 from fastapi import HTTPException
 
-def get_all_active_jobs(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Job).filter(Job.status == 'active').offset(skip).limit(limit).all()
+def get_all_active_jobs(db: Session, skip: int = 0, limit: int = 100, title: str = None, location: str = None, sort_by: str = None, experience_level: str = None, salary_min: int = None, salary_max: int = None, company_type: str = None, work_type: str = None):
+    query = db.query(Job).filter(Job.status == 'active')
+
+    if title:
+        query = query.filter(Job.title.ilike(f"%{title}%"))
+    if location:
+        query = query.filter(Job.location.ilike(f"%{location}%"))
+    if experience_level:
+        query = query.filter(Job.experience_level == experience_level)
+    if salary_min:
+        query = query.filter(Job.salary_min >= salary_min)
+    if salary_max:
+        query = query.filter(Job.salary_max <= salary_max)
+    if company_type:
+        query = query.filter(Job.company_type == company_type)
+    if work_type:
+        if work_type == "remote":
+            query = query.filter(Job.is_remote == True)
+        else:
+            query = query.filter(Job.work_type == work_type)
+
+    if sort_by:
+        if sort_by == "newest":
+            query = query.order_by(Job.created_at.desc())
+        elif sort_by == "oldest":
+            query = query.order_by(Job.created_at.asc())
+        elif sort_by == "salary":
+            query = query.order_by(Job.salary_max.desc())
+        elif sort_by == "company":
+            query = query.order_by(Job.company_name.asc())
+        elif sort_by == "title":
+            query = query.order_by(Job.title.asc())
+
+    return query.offset(skip).limit(limit).all()
 
 def get_all_jobs_for_admin(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Job).offset(skip).limit(limit).all()

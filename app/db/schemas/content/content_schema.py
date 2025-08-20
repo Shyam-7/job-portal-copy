@@ -28,7 +28,6 @@ class SiteContentUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class SiteContent(SiteContentBase, BaseSchema):
-    id: int # Override id to be int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

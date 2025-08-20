@@ -21,6 +21,9 @@ def create_application(db: Session, application: ApplicationCreate, user_id: str
 def get_user_applications(db: Session, user_id: str):
     return db.query(Application).filter(Application.user_id == user_id).all()
 
+def get_job_applications(db: Session, job_id: str):
+    return db.query(Application).filter(Application.job_id == job_id).all()
+
 def get_application_by_id(db: Session, application_id: str):
     db_application = db.query(Application).filter(Application.id == application_id).first()
     if not db_application:

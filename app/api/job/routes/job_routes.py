@@ -10,13 +10,27 @@ from app.api.deps import get_db
 
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 
+from typing import Optional
+
 @router.get("/", response_model=List[Job])
 def read_all_active_jobs(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    title: Optional[str] = None,
+    location: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    experience_level: Optional[str] = None,
+    salary_min: Optional[int] = None,
+    salary_max: Optional[int] = None,
+    company_type: Optional[str] = None,
+    work_type: Optional[str] = None
 ):
-    jobs = job_service.get_all_active_jobs(db, skip=skip, limit=limit)
+    jobs = job_service.get_all_active_jobs(
+        db, skip=skip, limit=limit, title=title, location=location, sort_by=sort_by,
+        experience_level=experience_level, salary_min=salary_min, salary_max=salary_max,
+        company_type=company_type, work_type=work_type
+    )
     return jobs
 
 @router.get("/admin/all", response_model=List[Job])

@@ -3,10 +3,12 @@ from app.db.base import BaseModel
 
 class SiteContent(BaseModel):
     __tablename__ = 'content'
+    section = Column(String(100), nullable=False)
+    section_type = Column(String(100), nullable=False)
     title = Column(String(255), nullable=False)
     content = Column(Text)
-    content_type = Column(String(100))
-    status = Column(String(50))
-    tags = Column(JSON)
-    view_count = Column(Integer, default=0)
-    is_featured = Column(Boolean, default=False)
+    image_url = Column(String(255))
+    image_alt = Column(String(255))
+    additional_data = Column(JSON)
+    sort_order = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)

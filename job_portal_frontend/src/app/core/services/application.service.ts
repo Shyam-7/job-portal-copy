@@ -47,7 +47,7 @@ export class ApplicationService {
 
   // Get all applications for current user
   getUserApplications(): Observable<JobApplication[]> {
-    return this.http.get<JobApplication[]>(`${this.baseUrl}/applications/user`, {
+    return this.http.get<JobApplication[]>(`${this.baseUrl}/applications/me`, {
       headers: this.getAuthHeaders()
     });
   }

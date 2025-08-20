@@ -40,9 +40,9 @@ def create_new_content(content: SiteContentCreate, db: Session = Depends(get_db)
     return create_content(db, content=content)
 
 @router.put("/admin/{content_id}", response_model=SiteContent)
-def update_existing_content(content_id: int, content_update: SiteContentUpdate, db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
+def update_existing_content(content_id: str, content_update: SiteContentUpdate, db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
     return update_content(db, content_id=content_id, content_update=content_update)
 
 @router.delete("/admin/{content_id}")
-def remove_content(content_id: int, db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
+def remove_content(content_id: str, db: Session = Depends(get_db), admin_user: User = Depends(get_admin_user)):
     return delete_content(db, content_id=content_id)

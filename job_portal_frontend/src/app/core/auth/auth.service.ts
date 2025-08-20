@@ -109,11 +109,11 @@ export class AuthService {
 
     // Use the new signin endpoint with JSON data
     const loginData = {
-      email: email,
+      username: email,
       password: pass
     };
 
-    return this.http.post<any>(`${this.apiUrl}/signin`, loginData).pipe(
+    return this.http.post<any>(`${this.apiUrl}/login`, new URLSearchParams(loginData)).pipe(
       tap(response => {
         if (response && response.access_token) {
           this.setItem('authToken', response.access_token);

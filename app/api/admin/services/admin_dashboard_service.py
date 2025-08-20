@@ -7,7 +7,7 @@ from app.db.models.job.application_model import Application
 def get_dashboard_stats(db: Session):
     totalUsers = db.query(User).count()
     totalJobs = db.query(Job).count()
-    activeJobs = db.query(Job).filter(or_(Job.expires_at > func.now(), Job.expires_at == None), Job.status == 'active').count()
+    activeJobs = db.query(Job).filter(Job.status == 'active').count()
     totalApplications = db.query(Application).count()
     pendingApplications = db.query(Application).filter(Application.status.in_(['submitted', 'under_review', 'pending', 'reviewing'])).count()
     scheduledInterviews = db.query(Application).filter(Application.status.in_(['interview', 'interview_scheduled', 'interviewing'])).count()

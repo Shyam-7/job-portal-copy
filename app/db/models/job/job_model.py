@@ -19,5 +19,7 @@ class Job(BaseModel):
     application_deadline = Column(DateTime)
     posted_by = Column(String(36), ForeignKey('users.id'))
     status = Column(String(50), default='active')
+    company_type = Column(String(100))
+    work_type = Column(String(100))
 
     poster = relationship("User")

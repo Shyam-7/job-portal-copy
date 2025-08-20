@@ -18,6 +18,8 @@ class JobBase(BaseModel):
     benefits: Optional[str] = Field(None, example="Health insurance, 401k, PTO")
     is_remote: Optional[bool] = Field(False, example=True)
     application_deadline: Optional[datetime] = Field(None, example="2025-12-31T23:59:59Z")
+    company_type: Optional[str] = Field(None, example="Startup")
+    work_type: Optional[str] = Field(None, example="Hybrid")
     status: Optional[str] = Field('active', example="active")
 
 class JobCreate(JobBase):

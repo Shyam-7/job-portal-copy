@@ -57,3 +57,53 @@ def client(db_session):
 
     # Clean up dependency overrides
     app.dependency_overrides.clear()
+
+@pytest.fixture(scope="function")
+def admin_token(client: TestClient) -> str:
+    """
+    A fixture that provides an admin token for the tests.
+    It creates an admin user and logs in to get the token.
+    """
+    email = "test_admin@example.com"
+    password = "adminpassword"
+
+    client.post("/api/auth/register", json={"email": email, "password": password, "name": "Test Admin", "role": "admin"})
+    response = client.post("/api/auth/login", data={"username": email, "password": password})
+
+    return response.json()["access_token"]
+
+@pytest.fixture(scope="function")
+def user_token(client: TestClient) -> str:
+    """
+    A fixture that provides a regular user token for the tests.
+    """
+    email = "test_user@example.com"
+    password = "userpassword"
+
+    client.post("/api/auth/register", json={"email": email, "password": password, "name": "Test User", "role": "user"})
+    response = client.post("/api/auth/login", data={"username": email, "password": password})
+
+    return response.json()["access_token"]
+
+from jose import jwt
+from app.config import settings
+
+@pytest.fixture(scope="function")
+def job(client: TestClient, admin_token: str) -> dict:
+    """
+    A fixture that creates a job for the tests.
+    """
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    response = client.post(
+        "/api/jobs/",
+        headers=headers,
+        json={"title": "Test Job for Applications", "company_name": "Test Co", "description": "A job for testing applications"}
+    )
+    return response.json()
+
+def decode_token(token: str) -> str:
+    """
+    Decodes a JWT token and returns the user ID (sub).
+    """
+    payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+    return payload.get("sub")

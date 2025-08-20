@@ -4,14 +4,14 @@ from app.db.schemas.content.content_schema import SiteContentCreate, SiteContent
 from fastapi import HTTPException
 
 def get_all_content(db: Session):
-    return db.query(SiteContent).order_by(SiteContent.content_type, SiteContent.title).all()
+    return db.query(SiteContent).order_by(SiteContent.section_type, SiteContent.title).all()
 
 def get_content_by_section(db: Session, section: str):
     # Since the content table doesn't have section field, search by title
     return db.query(SiteContent).filter(SiteContent.title.ilike(f'%{section}%')).first()
 
 def get_content_by_section_type(db: Session, section_type: str):
-    return db.query(SiteContent).filter(SiteContent.content_type == section_type).order_by(SiteContent.title).all()
+    return db.query(SiteContent).filter(SiteContent.section_type == section_type).order_by(SiteContent.title).all()
 
 def create_content(db: Session, content: SiteContentCreate):
     db_content = db.query(SiteContent).filter(SiteContent.title == content.title).first()
@@ -46,31 +46,15 @@ def delete_content(db: Session, content_id: str):
     return {"message": "Content deleted successfully"}
 
 def get_user_dashboard_content(db: Session):
-    # Since the content table doesn't have the section/is_active structure,
-    # we'll return default content for now
-    dashboard_content = {
-      'hero': {
-        'title': 'Find Your Dream Job', 
-        'subtitle': 'Connect with top employers and discover opportunities that match your skills.',
-        'searchSuggestions': 'Software Engineer, Marketing Manager, Data Analyst', 
-        'ctaButtonText': 'Find Job'
-      },
-      'welcome': {
-        'title': 'Welcome to Job Portal', 
-        'content': 'Your gateway to exciting career opportunities. Join thousands of job seekers who have found their perfect match.',
-        'ctaButtonText': 'Get Started', 
-        'secondaryLinks': []
-      },
-      'howItWorks': {
-        'title': 'How It Works', 
-        'steps': [
-          {'title': 'Create Profile', 'description': 'Set up your professional profile'},
-          {'title': 'Browse Jobs', 'description': 'Explore available opportunities'},
-          {'title': 'Apply', 'description': 'Submit your application'},
-          {'title': 'Get Hired', 'description': 'Land your dream job'}
-        ]
-      },
-      'heroImage': {'url': '/assets/person_searching_job.png', 'alt': 'Person searching job'}
-    }
-
-    return dashboard_content
+    dashboard_content = db.query(SiteContent).filter(SiteContent.section == "user-dashboard").first()
+    if not dashboard_content:
+        # Return default content if nothing is found in the database
+        return {
+          'hero': {
+            'title': 'Find Your Dream Job',
+            'subtitle': 'Connect with top employers and discover opportunities that match your skills.',
+            'searchSuggestions': 'Software Engineer, Marketing Manager, Data Analyst',
+            'ctaButtonText': 'Find Job'
+          }
+        }
+    return dashboard_content.additional_data
