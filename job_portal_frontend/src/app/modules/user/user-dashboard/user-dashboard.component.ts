@@ -40,12 +40,59 @@ export class UserDashboardComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading dashboard content:', error);
+        console.error('Error loading dashboard content from service:', error);
+        // Set fallback content if service fails
+        this.dashboardContent = {
+          hero: {
+            title: 'Find Your Dream Job',
+            subtitle: 'Connect with top employers and discover opportunities',
+            searchSuggestions: 'Designer, Programming, Digital Marketing, Video, Animation',
+            ctaButtonText: 'Find Job'
+          },
+          welcome: {
+            title: 'Welcome to Job Portal',
+            content: 'Create an account or sign in to see jobs that fit your requirements',
+            ctaButtonText: 'Get Started',
+            secondaryLinks: [
+              { url: '/user/user-profile', text: 'Post your resume' },
+              { url: '#', text: 'Post a job' }
+            ]
+          },
+          howItWorks: {
+            title: 'How Job Portal Works',
+            steps: [
+              {
+                icon: 'fas fa-user-plus',
+                title: 'Create account',
+                number: 1,
+                description: 'Fill in all your details for setting up your profile visible to recruiters.'
+              },
+              {
+                icon: 'fas fa-upload',
+                title: 'Upload Resume',
+                number: 2,
+                description: 'Showcase your skills and experience with a standout CV.'
+              },
+              {
+                icon: 'fas fa-search',
+                title: 'Find suitable job',
+                number: 3,
+                description: 'Use smart filters to discover jobs tailored for you.'
+              },
+              {
+                icon: 'fas fa-paper-plane',
+                title: 'Apply Easily',
+                number: 4,
+                description: 'Send applications in one click and track your progress.'
+              }
+            ]
+          },
+          heroImage: {
+            url: '/assets/person_searching_job.png',
+            alt: 'Person searching job'
+          }
+        };
         this.isLoading = false;
-        // Fallback content will be set by the service
-        this.contentService.dashboardContent$.subscribe(content => {
-          this.dashboardContent = content;
-        });
       }
     });
   }

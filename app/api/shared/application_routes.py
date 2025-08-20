@@ -3,20 +3,23 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.db.schemas.job.application_schema import Application, ApplicationCreate, ApplicationUpdate
 from app.services import application_service
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, get_optional_current_user
 from app.core.permissions import get_admin_user
 from app.db.models.user.user_model import User
 from app.api.deps import get_db
 
 router = APIRouter(prefix="/api/applications", tags=["Applications"])
 
+from typing import Optional
+
 @router.post("/", response_model=Application)
 def apply_for_job(
     application: ApplicationCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
-    return application_service.create_application(db, application=application, user_id=current_user.id)
+    user_id = current_user.id if current_user else None
+    return application_service.create_application(db, application=application, user_id=user_id)
 
 @router.get("/me", response_model=List[Application])
 def read_my_applications(

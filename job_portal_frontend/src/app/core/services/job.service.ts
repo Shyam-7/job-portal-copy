@@ -27,7 +27,9 @@ export class JobService {
   }
 
   getJobs(): Observable<Job[]> {
-    return this.http.get<Job[]>(this.apiUrl);
+    return this.http.get<Job[]>(this.apiUrl, {
+      headers: this.getAuthHeaders()
+    });
   }
 
   // Get all jobs for admin (including inactive)

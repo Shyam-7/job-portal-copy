@@ -3,12 +3,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { JobApplication } from '../models/job-application.model';
+import { apiConfig } from '../../api.config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApplicationService {
-  private baseUrl = 'http://localhost:3001/api';
+  private baseUrl = apiConfig.apiUrl;
   
   // Track applied job IDs for UI state
   private appliedJobsSubject = new BehaviorSubject<string[]>([]);
@@ -34,16 +35,9 @@ export class ApplicationService {
   // Apply to a job
   applyToJob(jobId: string, applicationData?: Partial<JobApplication>): Observable<any> {
     const application = {
-      jobId,
-      quickApply: applicationData?.quickApply || false,
-      applicationDate: new Date().toISOString(),
-      status: 'Applied' as const,
-      fullName: applicationData?.fullName || null,
-      email: applicationData?.email || null,
-      phone: applicationData?.phone || null,
-      coverLetter: applicationData?.coverLetter || null,
-      resumePath: applicationData?.resumePath || null,
-      ...applicationData
+      job_id: jobId,  // Backend expects job_id, not jobId
+      cover_letter: applicationData?.coverLetter || null,  // Backend expects cover_letter
+      resume_url: applicationData?.resumePath || null  // Backend expects resume_url
     };
 
     return this.http.post(`${this.baseUrl}/applications`, application, {
@@ -53,7 +47,7 @@ export class ApplicationService {
 
   // Get all applications for current user
   getUserApplications(): Observable<JobApplication[]> {
-    return this.http.get<JobApplication[]>(`${this.baseUrl}/applications/user`, {
+    return this.http.get<JobApplication[]>(`${this.baseUrl}/applications/me`, {
       headers: this.getAuthHeaders()
     });
   }

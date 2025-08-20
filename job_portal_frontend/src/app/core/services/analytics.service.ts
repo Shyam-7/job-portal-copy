@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { apiConfig } from '../../api.config';
 
 export interface AnalyticsData {
   totalUsers: number;
@@ -69,7 +70,7 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class AnalyticsService {
-  private apiUrl = 'http://localhost:3001/api';
+  private apiUrl = apiConfig.apiUrl;
 
   constructor(private http: HttpClient) {}
 

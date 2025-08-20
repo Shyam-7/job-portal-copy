@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { apiConfig } from '../../api.config';
 
 export interface Announcement {
   id?: number;
@@ -66,7 +67,7 @@ export interface AnnouncementStats {
   providedIn: 'root'
 })
 export class CommunicationService {
-  private baseUrl = 'http://localhost:3001/api/communication';
+  private baseUrl = `${apiConfig.apiUrl}/communication`;
   private unreadCountSubject = new BehaviorSubject<number>(0);
   public unreadCount$ = this.unreadCountSubject.asObservable();
 

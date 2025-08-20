@@ -3,14 +3,15 @@ from app.db.models.job.application_model import Application
 from app.db.schemas.job.application_schema import ApplicationCreate, ApplicationUpdate
 from fastapi import HTTPException
 
-def create_application(db: Session, application: ApplicationCreate, user_id: str):
-    # Check if user has already applied for this job
-    existing_application = db.query(Application).filter(
-        Application.job_id == application.job_id,
-        Application.user_id == user_id
-    ).first()
-    if existing_application:
-        raise HTTPException(status_code=400, detail="You have already applied for this job")
+def create_application(db: Session, application: ApplicationCreate, user_id: Optional[str] = None):
+    if user_id:
+        # Check if user has already applied for this job
+        existing_application = db.query(Application).filter(
+            Application.job_id == application.job_id,
+            Application.user_id == user_id
+        ).first()
+        if existing_application:
+            raise HTTPException(status_code=400, detail="You have already applied for this job")
 
     db_application = Application(**application.dict(), user_id=user_id)
     db.add(db_application)

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
+import { apiConfig } from '../../api.config';
 
 export interface DashboardStats {
   totalUsers: number;
@@ -39,7 +40,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class AdminDashboardService {
-  private apiUrl = 'http://localhost:3001/api';
+  private apiUrl = apiConfig.apiUrl;
 
   constructor(private http: HttpClient) {}
 

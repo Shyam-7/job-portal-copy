@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { apiConfig } from '../../api.config';
 
 export interface ContentItem {
   id?: number;
@@ -57,7 +58,7 @@ interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class ContentService {
-  private apiUrl = 'http://localhost:3001/api/content';
+  private apiUrl = `${apiConfig.apiUrl}/content`;
   private dashboardContentSubject = new BehaviorSubject<UserDashboardContent | null>(null);
   public dashboardContent$ = this.dashboardContentSubject.asObservable();
 
@@ -73,11 +74,66 @@ export class ContentService {
 
   // Public methods for user pages
   getUserDashboardContent(): Observable<UserDashboardContent> {
-    return this.http.get<ApiResponse<UserDashboardContent>>(`${this.apiUrl}/public/user-dashboard`)
+    return this.http.get<any>(`${this.apiUrl}/public/user-dashboard`)
       .pipe(
         map(response => {
-          this.dashboardContentSubject.next(response.data);
-          return response.data;
+          console.log('Raw API response:', response);
+
+          // Transform the API response to match the expected interface
+          const transformedContent: UserDashboardContent = {
+            hero: {
+              title: response.hero?.title || 'Find Your Dream Job',
+              subtitle: response.hero?.subtitle || 'Connect with top employers and discover opportunities',
+              searchSuggestions: 'Designer, Programming, Digital Marketing, Video, Animation',
+              ctaButtonText: response.hero?.cta_text || 'Find Job'
+            },
+            welcome: {
+              title: 'Welcome to Job Portal',
+              content: 'Create an account or sign in to see jobs that fit your requirements',
+              ctaButtonText: 'Get Started',
+              secondaryLinks: [
+                { url: '/user/user-profile', text: 'Post your resume' },
+                { url: '#', text: 'Post a job' }
+              ]
+            },
+            howItWorks: {
+              title: 'How Job Portal Works',
+              steps: [
+                {
+                  icon: 'fas fa-user-plus',
+                  title: 'Create account',
+                  number: 1,
+                  description: 'Fill in all your details for setting up your profile visible to recruiters.'
+                },
+                {
+                  icon: 'fas fa-upload',
+                  title: 'Upload Resume',
+                  number: 2,
+                  description: 'Showcase your skills and experience with a standout CV.'
+                },
+                {
+                  icon: 'fas fa-search',
+                  title: 'Find suitable job',
+                  number: 3,
+                  description: 'Use smart filters to discover jobs tailored for you.'
+                },
+                {
+                  icon: 'fas fa-paper-plane',
+                  title: 'Apply Easily',
+                  number: 4,
+                  description: 'Send applications in one click and track your progress.'
+                }
+              ]
+            },
+            heroImage: {
+              url: '/assets/person_searching_job.png',
+              alt: 'Person searching job'
+            }
+          };
+
+          console.log('Transformed content:', transformedContent);
+          this.dashboardContentSubject.next(transformedContent);
+          return transformedContent;
         }),
         catchError(error => {
           console.error('Error fetching dashboard content:', error);

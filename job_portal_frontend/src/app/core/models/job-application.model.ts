@@ -14,11 +14,7 @@ export interface JobApplication {
 
 // Interface for sending application data to backend
 export interface JobApplicationRequest {
-  jobId: string;
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  coverLetter?: string;
-  resumePath?: string;
-  quickApply?: boolean;
+  job_id: string;  // Backend expects job_id
+  cover_letter?: string;  // Backend expects cover_letter
+  resume_url?: string;  // Backend expects resume_url
 }

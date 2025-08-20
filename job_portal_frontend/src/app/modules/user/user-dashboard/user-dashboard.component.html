@@ -1,9 +1,11 @@
 <app-header></app-header>
 
 <!-- Loading state -->
-<div *ngIf="isLoading" class="flex justify-center items-center py-20">
-  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-</div>
+<div class="bg-white min-h-screen">
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="flex justify-center items-center min-h-screen">
+    <div class="text-xl">Loading dashboard...</div>
+  </div>
 
 <!-- Main content -->
 <div *ngIf="!isLoading && dashboardContent">

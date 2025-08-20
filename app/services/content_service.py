@@ -46,8 +46,10 @@ def delete_content(db: Session, content_id: str):
     return {"message": "Content deleted successfully"}
 
 def get_user_dashboard_content(db: Session):
+    print("Getting user dashboard content...")
     dashboard_content = db.query(SiteContent).filter(SiteContent.section == "user-dashboard").first()
     if not dashboard_content:
+        print("No dashboard content found in DB, returning default.")
         # Return default content if nothing is found in the database
         return {
           'hero': {
@@ -57,4 +59,5 @@ def get_user_dashboard_content(db: Session):
             'ctaButtonText': 'Find Job'
           }
         }
+    print(f"Found dashboard content: {dashboard_content.additional_data}")
     return dashboard_content.additional_data

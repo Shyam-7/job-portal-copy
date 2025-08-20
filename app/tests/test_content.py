@@ -39,3 +39,23 @@ def test_create_and_get_content(client: TestClient, admin_token: str):
     # Verify content is deleted
     response = client.get("/api/content/admin", headers=headers)
     assert not any(c["id"] == content_id for c in response.json())
+
+def test_get_user_dashboard_content(client: TestClient, admin_token: str):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # Create dashboard content
+    dashboard_data = {
+        "hero": {"title": "Test Hero"},
+        "welcome": {"title": "Test Welcome"}
+    }
+    client.post(
+        "/api/content/admin",
+        headers=headers,
+        json={"title": "Dashboard", "section": "user-dashboard", "section_type": "dashboard", "additional_data": dashboard_data}
+    )
+
+    # Get dashboard content
+    response = client.get("/api/content/public/user-dashboard")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["hero"]["title"] == "Test Hero"

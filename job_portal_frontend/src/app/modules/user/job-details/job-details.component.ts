@@ -140,13 +140,9 @@ export class JobDetailsComponent implements OnInit {
 
     const user = this.authService.getCurrentUser();
     const quickApplicationData = {
-      jobId: this.job.id,
-      fullName: user?.name || user?.email || '',
-      email: user?.email || '',
-      phone: '', // Default empty since user profile might not have phone
-      coverLetter: `I am interested in applying for the ${this.job.title} position at ${this.job.company}. Please consider my application based on my profile and experience.`,
-      resumePath: null,
-      quickApply: true
+      job_id: this.job.id,  // Backend expects job_id
+      cover_letter: `I am interested in applying for the ${this.job.title} position at ${this.job.company_name}. Please consider my application based on my profile and experience.`,
+      resume_url: null  // Backend expects resume_url
     };
 
     this.jobService.applyToJob(quickApplicationData).subscribe({

@@ -96,23 +96,37 @@ export class AuthService {
   login(credentials: any): Observable<any>;
   login(email: string, password: string): Observable<any>;
   login(emailOrCredentials: any, password?: string): Observable<any> {
-    let credentials: any;
+    let email: string;
+    let pass: string;
     
     if (typeof emailOrCredentials === 'string' && password) {
-      credentials = { email: emailOrCredentials, password: password };
+      email = emailOrCredentials;
+      pass = password;
     } else {
-      credentials = emailOrCredentials;
+      email = emailOrCredentials.email;
+      pass = emailOrCredentials.password;
     }
 
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+    // Use the new signin endpoint with JSON data
+    const loginData = {
+      username: email,
+      password: pass
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/login`, new URLSearchParams(loginData)).pipe(
       tap(response => {
-        if (response && response.token) {
-          this.setItem('authToken', response.token);
+        if (response && response.access_token) {
+          this.setItem('authToken', response.access_token);
           this.setItem('currentUser', JSON.stringify(response.user));
           this.currentUserSubject.next(response.user);
         }
       }),
-      map(response => response.user) // Return just the user object
+      map(response => {
+        return {
+          token: response.access_token,
+          user: response.user
+        };
+      })
     );
   }
 

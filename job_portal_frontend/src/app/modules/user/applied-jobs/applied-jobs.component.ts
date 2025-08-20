@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { JobService } from '../../../core/services/job.service';
+import { ApplicationService } from '../../../core/services/application.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { JobApplication } from '../../../core/models/job-application.model';
 import { Job } from '../../../core/models/job.model';
@@ -50,6 +51,7 @@ export class AppliedJobsComponent implements OnInit {
 
   constructor(
     private jobService: JobService,
+    private applicationService: ApplicationService,
     private authService: AuthService,
     private router: Router
   ) {}
@@ -65,10 +67,28 @@ export class AppliedJobsComponent implements OnInit {
       return;
     }
 
-    this.jobService.getUserApplications(currentUser.id).subscribe({
-      next: (data: { application: JobApplication; job: Job }[]) => {
+    this.applicationService.getUserApplications().subscribe({
+      next: (data: any[]) => {
+        // Transform the data to match the expected format
+        this.applications = data.map(app => ({
+          application: {
+            id: app.id,
+            jobId: app.job_id,
+            userId: app.user_id,
+            applicationDate: app.applied_at,
+            status: app.status,
+            coverLetter: app.cover_letter,
+            resumePath: app.resume_url
+          } as JobApplication,
+          job: {
+            id: app.job_id,
+            title: app.job_title,
+            company_name: app.job_company
+          } as Job
+        }));
+
         // Filter out withdrawn applications - they should not be visible
-        this.applications = data.filter(item => item.application.status !== 'Withdrawn');
+        this.applications = this.applications.filter(item => item.application.status !== 'Withdrawn');
         console.log('Loaded applications:', this.applications);
         this.applications.forEach((item, index) => {
           console.log(`Application ${index + 1}: Status = "${item.application.status}"`);
@@ -78,6 +98,7 @@ export class AppliedJobsComponent implements OnInit {
         this.isLoading = false;
       },
       error: (err: any) => {
+        console.error('Error loading applications:', err);
         this.handleError('Failed to load applied jobs. Please try again later.');
       }
     });
