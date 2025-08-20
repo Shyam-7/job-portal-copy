@@ -10,3 +10,4 @@ alembic
 fastapi-mail
 httpx
 aiofiles
+requests

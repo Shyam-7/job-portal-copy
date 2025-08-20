@@ -40,6 +40,39 @@ app.include_router(analytics_router)
 def read_root():
     return {"message": "Welcome to the Job Portal API"}
 
+import psycopg2
+from psycopg2 import Error
+from .config import settings
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/api/db-test")
+def test_database_connection():
+    try:
+        connection = psycopg2.connect(
+            host=settings.db_host,
+            user=settings.db_user,
+            password=settings.db_password,
+            database=settings.db_name,
+            port=settings.db_port
+        )
+
+        if connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT version();")
+            db_version = cursor.fetchone()
+            cursor.close()
+            connection.close()
+
+            return {
+                "status": "success",
+                "message": "Database connection successful",
+                "postgresql_version": db_version[0] if db_version else "Unknown"
+            }
+    except Error as e:
+        return {
+            "status": "error",
+            "message": f"Database connection failed: {str(e)}"
+        }
