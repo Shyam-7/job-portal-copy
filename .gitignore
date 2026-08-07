@@ -84,3 +84,15 @@ yarn-error.log*
 # Temporary files
 *.tmp
 *.temp
+
+# SSH keys and credentials
+*.pem
+*.key
+*_rsa
+*_rsa.pub
+*.pub
+id_*
+
+# Secrets
+*.secret
+*.credentials
